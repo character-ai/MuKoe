@@ -1,0 +1,68 @@
+# Copyright 2024 Character Technologies Inc. and Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+FROM ubuntu:22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y \
+    autoconf \
+    build-essential \
+    cmake \
+    curl \
+    g++ \
+    git \
+    libtool \
+    libgomp1 \
+    libc-ares-dev \
+    libssl-dev \
+    pkg-config \
+    python3 \
+    python3-pip \
+    python3-dev \
+    wget \
+    unzip
+
+
+ARG GRPC_VERSION=v1.51.1
+ARG PYBIND11_VERSION=v2.6.2
+
+# Install gRPC
+ENV GRPC_INSTALL_DIR=/grpc
+RUN mkdir -p $GRPC_INSTALL_DIR
+ENV PATH="$GRPC_INSTALL_DIR/bin:$PATH"
+RUN git clone --recurse-submodules -b ${GRPC_VERSION} --depth 1 --shallow-submodules https://github.com/grpc/grpc /grpc
+WORKDIR /grpc
+RUN mkdir -p cmake/build && \
+    cd cmake/build && \
+    cmake -DgRPC_INSTALL=ON \
+          -DgRPC_BUILD_TESTS=OFF \
+          -DCMAKE_INSTALL_PREFIX=$GRPC_INSTALL_DIR \
+          -DProtobuf_DIR=$GRPC_INSTALL_DIR/lib/cmake/protobuf \
+          ../.. && \
+    make -j 8 && \
+    make install
+
+# Grab Pybind11
+RUN git clone --branch ${PYBIND11_VERSION} --depth 1 https://github.com/pybind/pybind11.git /pybind11
+
+# Install Python dependencies
+# numpy, msgpack used for the test
+RUN python3 -m pip install --upgrade pip && \
+    pip install grpcio grpcio-tools pybind11 \
+    numpy msgpack
+
+RUN mkdir -p /grpc_batcher_build/
+WORKDIR /grpc_batcher
+ENTRYPOINT ["/bin/bash"]

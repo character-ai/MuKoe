@@ -1,0 +1,106 @@
+# Copyright 2024 Character Technologies Inc. and Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+cluster_name: mukoe
+
+max_workers: 10
+
+docker:
+    image: gcr.io/<YOUR-GCP-PROJECT-ID>/ray-muzero:cpu  # Please remember to update this!
+    container_name: "ray_docker"
+    pull_before_run: True
+    run_options:  # Extra options to pass into "docker run"
+      - --ulimit nofile=65536:65536
+
+available_node_types:
+    ray_head_default:
+        min_workers: 0
+        max_workers: 0
+        resources: {"CPU": 0}
+        node_config:
+            machineType: n2-standard-4
+            disks:
+              - boot: true
+                autoDelete: true
+                type: PERSISTENT
+                initializeParams:
+                  diskSizeGb: 50
+                  sourceImage: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
+    reverb_worker:
+        docker:
+          worker_image: gcr.io/<YOUR-PROJECT-ID>/ray-muzero:tpu
+        min_workers: 1
+        max_workers: 1
+        docker:
+            worker_run_options: ["--privileged"]
+        resources: {"TPU": 4, "replay_buffer": 1}
+        node_config:
+            acceleratorType: v4-8
+            runtimeVersion: tpu-vm-v4-base
+    tpu_actor:
+        docker:
+          worker_image: gcr.io/<YOUR-PROJECT-ID>/ray-muzero:tpu
+        min_workers: 1
+        max_workers: 1
+        docker:
+            worker_run_options: ["--privileged"]
+        resources: {"TPU": 4, "learner": 1}
+        node_config:
+            acceleratorType: v4-8
+            runtimeVersion: tpu-vm-v4-base
+    muzero_actor:
+        min_workers: 5
+        max_workers: 5
+        resources: {"CPU": 16, "actor": 1}
+        node_config:
+            machineType: n1-standard-16
+            disks:
+              - boot: true
+                autoDelete: true
+                type: PERSISTENT
+                initializeParams:
+                  diskSizeGb: 50
+                  sourceImage: projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts
+            serviceAccounts:
+            - email: ray-autoscaler-sa-v1@<YOUR-PROJECT-ID>.iam.gserviceaccount.com
+              scopes:
+              - https://www.googleapis.com/auth/cloud-platform
+
+provider:
+    type: gcp
+    region: us-central2
+    availability_zone: us-central2-b
+    project_id: <YOUR-PROJECT-ID>
+
+initialization_commands:
+  # Don't stall on ubuntu graphic...
+  #- sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
+  # Installs Docker if it doesn't exist
+  - >
+    if ! command -v docker &> /dev/null; then
+      sudo apt-get update;
+      curl -fsSL https://get.docker.com -o get-docker.sh;
+      sudo sh get-docker.sh;
+    else
+      echo "Docker is already installed.";
+    fi
+  # Sets Docker permissions
+  - sudo usermod -aG docker $USER
+  - sudo systemctl restart docker -f
+  # Provides auth + access to GCR
+  - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v2.1.10/docker-credential-gcr_linux_amd64-2.1.10.tar.gz" | tar xz docker-credential-gcr && chmod +x docker-credential-gcr && sudo mv docker-credential-gcr /usr/bin/
+  - docker-credential-gcr configure-docker
+
+# Specify the node type of the head node (as configured above).
+head_node_type: ray_head_default

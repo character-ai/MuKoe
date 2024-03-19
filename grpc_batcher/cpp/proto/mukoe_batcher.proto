@@ -1,0 +1,54 @@
+/** Copyright 2024 Character Technologies Inc. and Google LLC
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+* ==============================================================================*/
+
+syntax = "proto3";
+
+package mukoe_batcher;
+
+service MukoeService {
+  rpc ProcessRequest(stream MukoeRequest) returns (stream MukoeResponse) {}
+}
+
+// Message format for representations network
+message Representations {
+  bytes data = 1;
+}
+
+// Message format for dynamics network
+message Dynamics {
+  bytes data = 1;
+  int32 action = 2;
+}
+
+message MukoeRequest {
+  oneof request_type {
+    Representations representations = 1;
+    Dynamics dynamics = 2;
+  }
+}
+
+message KeyValue {
+  string key = 1;
+  bytes values = 2;
+}
+
+message ModelResponse {
+  repeated KeyValue dictionary = 1;  // Simulates a dictionary with arbitrary keys, each associated with a list of bytes
+  int32 step = 2;
+}
+
+message MukoeResponse {
+  ModelResponse result = 1;
+}

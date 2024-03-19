@@ -1,0 +1,6 @@
+**/build/**
+**/pycache/**
+**/__pycache__/**
+**egg-info**
+**/.vscode/**
+**/CMakeFiles/**

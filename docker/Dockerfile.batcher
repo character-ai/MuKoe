@@ -1,0 +1,37 @@
+# Copyright 2024 Character Technologies Inc. and Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+FROM grpc_batcher_base
+
+# Copy your project files into the container
+COPY grpc_batcher /grpc_batcher
+
+# Set the working directory
+WORKDIR /grpc_batcher
+
+# Clean up previous builds if necessary
+RUN rm -rf build && rm -rf cpp/build && rm -rf cpp/CMakeFiles
+
+# 3. Build commands. Commented out as we don't use this in the pip wheel,
+# but it may be useful for development.
+#RUN cd cpp && mkdir build && cd build && \
+#    cmake -DCMAKE_PREFIX_PATH=$GRPC_INSTALL_DIR .. && \
+#    cmake --build . --verbose
+
+# Build the Python wheel
+RUN python3 setup.py bdist_wheel
+
+RUN cp dist/*.whl .
+
+ENTRYPOINT ["/bin/bash"]
