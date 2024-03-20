@@ -47,29 +47,29 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--ckpt_dir",
     action="store",
-    default="/home/wendy/ray-train-test-MsPacman-mukoe-6/ckpt",
+    default="/home/wendy/ray-train-test-MsPacman-mukoe-7/ckpt",
 )
 parser.add_argument(
     "--save_dir",
     action="store",
-    default="/home/wendy/ray-train-test-MsPacman-mukoe-6/log",
+    default="/home/wendy/ray-train-test-MsPacman-mukoe-7/log",
 )
 parser.add_argument(
     "--tensorboard_dir",
     action="store",
-    default="/home/wendy/ray-train-test-MsPacman-mukoe-6/tensorboard",
+    default="/home/wendy/ray-train-test-MsPacman-mukoe-7/tensorboard",
 )
 parser.add_argument(
     "--reverb_dir",
     action="store",
-    default="/home/wendy/ray-train-test-MsPacman-mukoe-6/reverb",
+    default="/home/wendy/ray-train-test-MsPacman-mukoe-7/reverb",
 )
 
-parser.add_argument("--num_actors", action="store", type=int, default=600)
+parser.add_argument("--num_actors", action="store", type=int, default=400)
 # parser.add_argument("--core_per_task", action="store", type=int, default=14)
 parser.add_argument("--core_per_task", action="store", type=int, default=12)
 parser.add_argument("--environment", action="store", default="MsPacman")
-parser.add_argument("--dyna_infer", action="store", default="cpu")
+parser.add_argument("--dyna_infer", action="store", default="tpu")
 parser.add_argument("--repr_infer", action="store", default="tpu")
 
 args = parser.parse_args()

@@ -65,16 +65,16 @@ class ReplayConfig:
 class InferenceConfig:
     """training configuration for MZ."""
 
-    dyna_batch_size: int = 256
+    dyna_batch_size: int = 16
     repr_batch_size: int = 8
-    dyna_time_out: float = 0.002
+    dyna_time_out: float = 0.0005
     repr_time_out: float = 0.001
     dyna_update_interval: int = (
-        16000000  # repr_update_interval * num_simulations in mcts/utils.py
+        75000  # repr_update_interval * num_simulations in mcts/utils.py
     )
     repr_update_interval: int = 1500
-    dyna_actor_per_replica: int = 60
-    repr_actor_per_replica: int = 60
+    dyna_actor_per_replica: int = 80
+    repr_actor_per_replica: int = 80
 
 
 @dataclasses.dataclass
