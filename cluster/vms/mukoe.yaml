@@ -46,9 +46,11 @@ available_node_types:
             worker_run_options: ["--privileged"]
         resources: {"TPU": 4, "replay_buffer": 1}
         node_config:
-            acceleratorType: v4-8
+            acceleratorConfig:
+              type: V4
+              topology: 2x2x1
             runtimeVersion: tpu-vm-v4-base
-    tpu_actor:
+    tpu_learner:
         docker:
           worker_image: gcr.io/<YOUR-PROJECT-ID>/ray-muzero:tpu
         min_workers: 1
@@ -57,7 +59,35 @@ available_node_types:
             worker_run_options: ["--privileged"]
         resources: {"TPU": 4, "learner": 1}
         node_config:
-            acceleratorType: v4-8
+            acceleratorConfig:
+              type: V4
+              topology: 2x2x1
+            runtimeVersion: tpu-vm-v4-base
+    inference_repr:
+        docker:
+          worker_image: gcr.io/<YOUR-PROJECT-ID>/ray-muzero:tpu
+        min_workers: 1
+        max_workers: 1
+        docker:
+            worker_run_options: ["--privileged"]
+        resources: {"TPU": 4, "inference_repr": 1, "inference_repr_cpu_handler": 1}
+        node_config:
+            acceleratorConfig:
+              type: V4
+              topology: 2x2x1
+            runtimeVersion: tpu-vm-v4-base
+    inference_dyna:
+        docker:
+          worker_image: gcr.io/<YOUR-PROJECT-ID>/ray-muzero:tpu
+        min_workers: 1
+        max_workers: 1
+        docker:
+            worker_run_options: ["--privileged"]
+        resources: {"TPU": 4, "inference_dyna": 1, "inference_dyna_cpu_handler": 1}
+        node_config:
+            acceleratorConfig:
+              type: V4
+              topology: 2x2x1
             runtimeVersion: tpu-vm-v4-base
     muzero_actor:
         min_workers: 5

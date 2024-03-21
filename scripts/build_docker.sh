@@ -1,7 +1,7 @@
 #!/bin/bash
 
 build_and_deploy() {
-  GCR_DEST=gcr.io/$1/ray-muzero:$2
+  GCR_DEST=gcr.io/$1/mukoe:$2
   if [ "$2" = "tpu" ]; then
     command="docker build -f docker/Dockerfile --network=host --build-arg tpu=true -t $GCR_DEST ."
   else

@@ -1,0 +1,313 @@
+# Copyright 2024 Character Technologies Inc. and Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: mukoe-kuberay
+spec:
+  headGroupSpec:
+    rayStartParams:
+      {}
+    template:
+      spec:
+        imagePullSecrets:
+          []
+        containers:
+          - volumeMounts:
+            - mountPath: /tmp/ray
+              name: ray-logs
+            name: ray-head
+            image: gcr.io/<YOUR-GCP-PROJECT-ID>/mukoe:cpu
+            imagePullPolicy: IfNotPresent
+            resources:
+              limits:
+                cpu: "8"
+                ephemeral-storage: 20Gi
+                memory: 40G
+              requests:
+                cpu: "8"
+                ephemeral-storage: 10Gi
+                memory: 40G
+            securityContext:
+              capabilities:
+                add:
+                - SYS_PTRACE
+            env:
+              - name: RAY_memory_monitor_refresh_ms
+                value: "0"
+              - name: RAY_GRAFANA_IFRAME_HOST
+                value: http://${grafana_host}
+              - name: RAY_GRAFANA_HOST
+                value: http://grafana:80
+              - name: RAY_PROMETHEUS_HOST
+                value: http://frontend:9090
+            ports:
+              - containerPort: 6379
+                name: gcs
+              - containerPort: 8265
+                name: dashboard
+              - containerPort: 10001
+                name: client
+              - containerPort: 8000
+                name: serve
+              - containerPort: 8471
+                name: slicebuilder
+              - containerPort: 8081
+                name: mxla
+        volumes:
+          - emptyDir: {}
+            name: ray-logs
+      metadata:
+        labels:
+          cloud.google.com/gke-ray-node-type: head
+          app.kubernetes.io/name: kuberay
+          app.kubernetes.io/instance: mukoe
+  workerGroupSpecs:
+  - rayStartParams:
+      block: "true"
+      resources: '"{\"TPU\": 4, \"learner\": 1, \"learner_cpu\": 1}"'
+    replicas: 1
+    minReplicas: 1
+    maxReplicas: 1
+    # Note: numOfHosts was introduced in kuberay 1.1!
+    numOfHosts: 1
+    groupName: tpu-learner
+    template:
+      spec:
+        imagePullSecrets:
+          []
+        containers:
+          - volumeMounts:
+            - mountPath: /tmp/ray
+              name: ray-logs
+            name: ray-worker
+            image: gcr.io/<YOUR-GCP-PROJECT-ID>/mukoe:tpu
+            imagePullPolicy: IfNotPresent
+            resources:
+              limits:
+                cpu: "1"
+                ephemeral-storage: 20Gi
+                google.com/tpu: "4"
+                memory: 400G
+              requests:
+                cpu: "1"
+                ephemeral-storage: 10Gi
+                google.com/tpu: "4"
+                memory: 400G
+            securityContext:
+              capabilities:
+                add:
+                - SYS_PTRACE
+            env:
+            ports:
+              null
+        volumes:
+          - emptyDir: {}
+            name: ray-logs
+        nodeSelector:
+          cloud.google.com/gke-tpu-accelerator: tpu-v4-podslice
+          cloud.google.com/gke-tpu-topology: 2x2x1
+      metadata:
+        labels:
+          cloud.google.com/gke-ray-node-type: worker
+          app.kubernetes.io/name: kuberay
+          app.kubernetes.io/instance: mukoe
+  - rayStartParams:
+      block: "true"
+      resources: '"{\"TPU\": 4, \"inference_v4_8_repr_1\": 1, \"inference_repr_cpu_handler_1\": 1}"'
+    replicas: 10
+    minReplicas: 10
+    maxReplicas: 10
+    numOfHosts: 1
+    groupName: inference-repr
+    template:
+      spec:
+        imagePullSecrets:
+          []
+        containers:
+          - volumeMounts:
+            - mountPath: /tmp/ray
+              name: ray-logs
+            name: ray-worker
+            image: gcr.io/<YOUR-GCP-PROJECT-ID>/mukoe:tpu
+            imagePullPolicy: IfNotPresent
+            resources:
+              limits:
+                cpu: "1"
+                ephemeral-storage: 20Gi
+                google.com/tpu: "4"
+                memory: 400G
+              requests:
+                cpu: "1"
+                ephemeral-storage: 10Gi
+                google.com/tpu: "4"
+                memory: 400G
+            securityContext:
+              capabilities:
+                add:
+                - SYS_PTRACE
+            env:
+            ports:
+            - containerPort: 50051
+              name: grpc
+        volumes:
+          - emptyDir: {}
+            name: ray-logs
+        nodeSelector:
+          cloud.google.com/gke-tpu-accelerator: tpu-v4-podslice
+          cloud.google.com/gke-tpu-topology: 2x2x1
+      metadata:
+        labels:
+          cloud.google.com/gke-ray-node-type: worker
+          app.kubernetes.io/name: kuberay
+          app.kubernetes.io/instance: mukoe
+  - rayStartParams:
+      block: "true"
+      resources: '"{\"TPU\": 4, \"inference_v4_8_dyna\": 1, \"inference_dyna_cpu_handler\": 1}"'
+    # Set to >1 if you intend to use dyna for TPU inference acting.
+    replicas: 0
+    minReplicas: 0
+    maxReplicas: 0
+    numOfHosts: 1
+    groupName: inference-dyna
+    template:
+      spec:
+        imagePullSecrets:
+          []
+        containers:
+          - volumeMounts:
+            - mountPath: /tmp/ray
+              name: ray-logs
+            name: ray-worker
+            image: gcr.io/<YOUR-GCP-PROJECT-ID>/mukoe:tpu
+            imagePullPolicy: IfNotPresent
+            resources:
+              limits:
+                cpu: "1"
+                ephemeral-storage: 20Gi
+                google.com/tpu: "4"
+                memory: 400G
+              requests:
+                cpu: "1"
+                ephemeral-storage: 10Gi
+                google.com/tpu: "4"
+                memory: 400G
+            securityContext:
+              capabilities:
+                add:
+                - SYS_PTRACE
+            env:
+            ports:
+            - containerPort: 50051
+              name: grpc
+        volumes:
+          - emptyDir: {}
+            name: ray-logs
+        nodeSelector:
+          cloud.google.com/gke-tpu-accelerator: tpu-v4-podslice
+          cloud.google.com/gke-tpu-topology: 2x2x1
+      metadata:
+        labels:
+          cloud.google.com/gke-ray-node-type: worker
+          app.kubernetes.io/name: kuberay
+          app.kubernetes.io/instance: mukoe
+  - rayStartParams:
+      block: "true"
+      resources: '"{\"TPU\": 4, \"replay_buffer\": 1}"'
+    replicas: 1
+    minReplicas: 1
+    maxReplicas: 1
+    numOfHosts: 1
+    groupName: reverb
+    template:
+      spec:
+        imagePullSecrets:
+          []
+        containers:
+          - volumeMounts:
+            - mountPath: /tmp/ray
+              name: ray-logs
+            name: ray-worker
+            image: gcr.io/<YOUR-GCP-PROJECT-ID>/mukoe:tpu
+            imagePullPolicy: IfNotPresent
+            resources:
+              limits:
+                cpu: "1"
+                ephemeral-storage: 20Gi
+                google.com/tpu: "4"
+                memory: 400G
+              requests:
+                cpu: "1"
+                ephemeral-storage: 10Gi
+                google.com/tpu: "4"
+                memory: 400G
+            securityContext:
+              capabilities:
+                add:
+                - SYS_PTRACE
+            env:
+            ports:
+              null
+        volumes:
+          - emptyDir: {}
+            name: ray-logs
+        nodeSelector:
+          cloud.google.com/gke-tpu-accelerator: tpu-v4-podslice
+          cloud.google.com/gke-tpu-topology: 2x2x1
+      metadata:
+        labels:
+          cloud.google.com/gke-ray-node-type: worker
+          app.kubernetes.io/name: kuberay
+          app.kubernetes.io/instance: mukoe
+  - rayStartParams:
+      block: "true"
+      resources: '"{\"actor\": 1}"'
+    replicas: 1
+    minReplicas: 80
+    maxReplicas: 80
+    groupName: actor
+    template:
+      spec:
+        imagePullSecrets:
+          []
+        containers:
+          - volumeMounts:
+            - mountPath: /tmp/ray
+              name: ray-logs
+            name: ray-worker
+            image: gcr.io/<YOUR-GCP-PROJECT-ID>/mukoe:cpu
+            imagePullPolicy: IfNotPresent
+            resources:
+              limits:
+                cpu: "15"
+                memory: "50G"
+              requests:
+                cpu: "15"
+                memory: "40G"
+            securityContext:
+              capabilities:
+                add:
+                - SYS_PTRACE
+            env:
+            ports:
+              null
+        volumes:
+          - emptyDir: {}
+            name: ray-logs
+      metadata:
+        labels:
+          cloud.google.com/gke-ray-node-type: worker
+          app.kubernetes.io/name: kuberay
+          app.kubernetes.io/instance: mukoe
