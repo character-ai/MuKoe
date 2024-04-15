@@ -2,6 +2,8 @@
 
 MuKoe is an implementation of MuZero using Ray as the distributed orchestrator on GKE. We provide examples with Atari.
 
+![example of our trained agent playing MsPacman](https://github.com/character-ai/MuKoe/assets/4813789/b0988831-be9e-46e1-aa00-78ddd7247127)
+
 ## Environment setup
 To set up the software environment used in MuKoe, feel free to utilize our provided [docker](docker/) files and scripts to build both the CPU and TPU docker images:
 
