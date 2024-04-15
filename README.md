@@ -36,45 +36,22 @@ Our implementation of MuKoe has specific hardware requirements:
 * the remote handler is a standard cpu node, it does not have to do real work but to act as an intermediate handler.
 * The actors depend on if you are using CPU inference or batched TPU inference. We illustrate the set up individually next. 
 
-Once your cluster is set up, you should be able to check that the resources in the Ray cluster look something like the following (run this from the head node):
+### Running the job with CPU actors
+
+Once your cluster is set up, you should be able to check the resources in the Ray cluster. To run on CPU, make sure your `ray status` when running from the head node show the following resources. Specifically, we need at least 16 cpu cores per actor. For instance, if your cpu node has 64 cores, then assign 4 actor resources to in your cluster definition:
 
 ```
-$ ray status
-
 Resources
 ---------------------------------------------------------------
 Usage:
  0.0/13056.0 CPU
- 0.0/8.0 TPU
- 0.0/800.0 actor
- 0.0/1.0 inference_cpu_handler
- 0B/59.93TiB memory
- 0B/18.25TiB object_store_memory
- 0.0/1.0 replay_buffer
- 0.0/1.0 learner
-
-Demands:
- (no resource demands)
-```
-
-### Running the job with CPU actors
-
-To run on CPU, make sure your `ray status` show the following resources. Specifically, we need at least 16 cpu cores per actor. For instance, if your cpu node has 64 cores, then assign 4 actor resources to in your cluster definition:
-
-```
-Resources
----------------------------------------------------------------
-Usage:
- 1.0/13056.0 CPU
  0.0/800.0 actor
  0.0/8.0 inference_cpu_handler
  0B/59.93TiB memory
  0B/18.25TiB object_store_memory
- 1.0/1.0 replay_buffer
+ 0.0/1.0 replay_buffer
  0.0/2.0 learner
-
-Demands:
- (no resource demands)
+ 0.0/2.0 learner_cpu
 ```
 
 To start the CPU job, launch `ray_main.py` with Ray API:
@@ -87,7 +64,8 @@ ray job submit --working-dir muzero -- RAY_DEUP_LOGS=0 python ray_main.py \
     --num_actors ${NUM_ACTORS} \
     --core_per_task ${CORES_PER_TASK} \
     --environment ${ENVIRONMENT} \
-    --inference_node cpu
+    --dyna_infer cpu \
+    --repr_infer cpu 
 ```
 
 If developing on a machine separate from the Ray Head node, you may find it useful to create a port forward (port 8265) to the Ray head node and set `RAY_ADDRESS=http://127.0.0.1:8265`, then use the [Ray Job CLI](https://docs.ray.io/en/latest/cluster/running-applications/job-submission/quickstart.html).
@@ -110,15 +88,61 @@ $ ray job submit ...
 We have two scripts: `ray_main.py` and `ray_benchmark.py` within the `muzero` folder that can also be
 run using the ray Job API.
 
-### Run on TPU
+### Running the job with centralized TPU acting inferences
 
-WIP
+Although our implementation supports running both `repr` and `dyna` networks on TPUs, we recommend using centralized TPU inference only for `repr`, which is much more compute-intensive, while keeping the inference for `dyna` local on a CPU with 4 to 6 cores. In our experiments, this setup provided the best speed with our current implementation of the gRPC batcher. The `ray status` should accordingly display the following resources: 
+```
+Resources
+---------------------------------------------------------------
+Usage:
+ 0.0/6600.0 CPU
+ 0.0/240.0 TPU
+ 0.0/940.0 actor
+ 0.0/1.0 inference_repr_cpu_handler_0
+ 0.0/1.0 inference_repr_cpu_handler_1
+ 0.0/1.0 inference_repr_cpu_handler_2
+ 0.0/1.0 inference_repr_cpu_handler_3
+ 0.0/1.0 inference_repr_cpu_handler_4
+ 0.0/1.0 inference_repr_cpu_handler_5
+ 0.0/1.0 inference_repr_cpu_handler_6
+ 0.0/1.0 inference_repr_cpu_handler_7
+ 0.0/1.0 inference_repr_cpu_handler_8
+ 0.0/1.0 inference_repr_cpu_handler_9
+ 0.0/1.0 inference_v4_8_repr_0
+ 0.0/1.0 inference_v4_8_repr_1
+ 0.0/1.0 inference_v4_8_repr_2
+ 0.0/1.0 inference_v4_8_repr_3
+ 0.0/1.0 inference_v4_8_repr_4
+ 0.0/1.0 inference_v4_8_repr_5
+ 0.0/1.0 inference_v4_8_repr_6
+ 0.0/1.0 inference_v4_8_repr_7
+ 0.0/1.0 inference_v4_8_repr_8
+ 0.0/1.0 inference_v4_8_repr_9
+ 0.0/2.0 learner
+ 0.0/2.0 learner_cpu
+ 0B/16.35TiB memory
+ 0B/7.01TiB object_store_memory
+ 0.0/1.0 replay_buffer
+```
+Notably, in the above example, we use 10 v4-8 TPUs to perform inference for 800 actors, i.e., `CORES_PER_TASK=6, NUM_ACTORS=800`. Similar to the CPU acting version, we can launch with `ray_main.py`:
+```
+ray job submit --working-dir muzero -- RAY_DEUP_LOGS=0 python ray_main.py \
+    --ckpt_dir ${CKPT_DIR} \
+    --save_dir ${SAVE_DIR} \
+    --tensorboard_dir ${TB_DIR} \
+    --reverb_dir ${REVERB_DIR} \
+    --num_actors ${NUM_ACTORS} \
+    --core_per_task ${CORES_PER_TASK} \
+    --environment ${ENVIRONMENT} \
+    --dyna_infer cpu \
+    --repr_infer tpu 
+```
 
 # Contributions
 
 ### Character.AI:
 
-- Wendy Shang: main contributor, MuZero algorithm implementation and ray integration. 
+- Wendy Shang: main contributor, MuZero algorithm implementation and ray integration. Work done while at C.AI.
 
 ### Google:
 
