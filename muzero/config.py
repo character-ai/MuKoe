@@ -38,7 +38,7 @@ class TrainConfig:
     batchsize: int = 512
     total_training_steps: int = 1_000_000
     log_period: int = 10
-    ckpt_save_interval_steps: int = 50
+    ckpt_save_interval_steps: int = 100
     # TEST:
     # batchsize: int = 8
     # log_period: int = 1
@@ -65,15 +65,15 @@ class ReplayConfig:
 class InferenceConfig:
     """training configuration for MZ."""
 
-    dyna_batch_size: int = 16
-    repr_batch_size: int = 8
-    dyna_time_out: float = 0.0005
+    dyna_batch_size: int = 32
+    repr_batch_size: int = 16
+    dyna_time_out: float = 0.00001
     repr_time_out: float = 0.001
     dyna_update_interval: int = (
-        75000  # repr_update_interval * num_simulations in mcts/utils.py
+        5000  # repr_update_interval * num_simulations in mcts/utils.py
     )
     repr_update_interval: int = 1500
-    dyna_actor_per_replica: int = 80
+    dyna_actor_per_replica: int = 50
     repr_actor_per_replica: int = 80
 
 
