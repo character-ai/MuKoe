@@ -237,6 +237,7 @@ class RayDynaInferenceShard(RayInferenceShardBase):
         if latest_step is None:
             latest_step = 0
             print(f"need to load actor latest_ckpt_step={latest_step}")
+        self.step = latest_step
         while True:
             try:
                 restored = self._ckpt_manager.restore(latest_step)
