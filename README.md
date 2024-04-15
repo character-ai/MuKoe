@@ -1,6 +1,6 @@
 # MuKoe
 
-MuKoe is an implementation of MuZero using Ray as the distributed orchestrator on GKE. We provide examples with Atari.
+MuKoe is an implementation of MuZero using Ray as the distributed orchestrator on GKE. We provide examples with Atari. To gain an overview of this codebase, we refer you to [our talk](https://www.youtube.com/watch?v=vpM2Gq4RvIU) at Google Next, 2024. 
 
 ![example of our trained agent playing MsPacman](https://github.com/character-ai/MuKoe/assets/4813789/b0988831-be9e-46e1-aa00-78ddd7247127)
 
