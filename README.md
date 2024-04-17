@@ -1,8 +1,8 @@
 # MuKoe
 
-MuKoe is an implementation of MuZero using Ray as the distributed orchestrator on GKE. We provide examples with Atari. To gain an overview of this codebase, we refer you to [our talk](https://www.youtube.com/watch?v=vpM2Gq4RvIU) at Google Next, 2024. 
+MuKoe is a fully open sourced implementation of MuZero using Ray as the distributed orchestrator on GKE. We provide examples with Atari. To gain an overview of this codebase, we refer you to [our talk](https://www.youtube.com/watch?v=vpM2Gq4RvIU) at Google Next, 2024. 
 
-![example of our trained agent playing MsPacman](https://github.com/character-ai/MuKoe/assets/4813789/b0988831-be9e-46e1-aa00-78ddd7247127)
+<img src="https://github.com/character-ai/MuKoe/assets/4813789/06147c9d-a5a7-41ed-a44e-2ead3c748f21" width="150"/> <img src="https://github.com/character-ai/MuKoe/assets/4813789/e167a787-a7de-4558-9cb9-d532a8149b73" width="150"/> <img src="https://github.com/character-ai/MuKoe/assets/4813789/691c2ca1-30dd-4ab7-bd02-7a66a9ba4da6" width="150"/>
 
 ## Environment setup
 To set up the software environment used in MuKoe, feel free to utilize our provided [docker](docker/) files and scripts to build both the CPU and TPU docker images:
