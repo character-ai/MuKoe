@@ -64,7 +64,7 @@ def make_reverb_dataset(
       table: The name of the Reverb table to use, or a mapping of (table_name,
         float_weight) for mixing multiple tables in the input (e.g. mixing online
         and offline experiences).
-      num_parallel_calls: The parralelism to use. Setting it to `tf.data.AUTOTUNE`
+      num_parallel_calls: The parallelism to use. Setting it to `tf.data.AUTOTUNE`
         will allow `tf.data` to automatically find a reasonable value.
       max_in_flight_samples_per_worker: see reverb.TrajectoryDataset for details.
       postprocess: User-specified transformation to be applied to the dataset (as
